@@ -16,8 +16,9 @@ return new class extends Migration
         Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('password');
+            $table->enum('gender', ['male', 'female', 'others']);
             $table->string('address');
+            $table->string('password');
             $table->string('mobile_number')->unique();
             $table->timestamp('mobile_number_verified_at')->nullable();
             $table->string('mobile_verified_code')->unique();

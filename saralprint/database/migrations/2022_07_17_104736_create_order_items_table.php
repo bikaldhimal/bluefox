@@ -17,7 +17,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('order_id')->constrained();
             $table->string('name');
-            $table->string('description');
+            $table->string('desc');
             $table->integer('price');
         });
     }

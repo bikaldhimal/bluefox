@@ -148,7 +148,6 @@ return [
     |
     */
 
-    'match_old_password' => 'The :attribute does not match your current password',
     'custom' => [
         'attribute-name' => [
             'rule-name' => 'custom-message',

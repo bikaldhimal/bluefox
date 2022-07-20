@@ -4,15 +4,12 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\User;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
-
-
 
 class UserController extends Controller
 {
@@ -38,9 +35,10 @@ class UserController extends Controller
     {
         $request->validate([
             'name' => 'required',
+            'gender' => 'required|in:male,female,others',
             'address' => 'required',
             'mobile_number' => 'required|numeric|regex:/9[6-8]{1}[0-9]{8}/|digits:10|unique:users',
-            'password' => 'required|min:8|max:16|confirmed',
+            'password' => 'required|min:8|max:20|confirmed',
             'email' => 'required|email|unique:users',
             'type' => 'required|in:corporate,individual',
             'is_admin' => 'required|boolean'
@@ -48,6 +46,7 @@ class UserController extends Controller
 
         $user = User::create([
             'name' => $request->name,
+            'gender' => $request->gender,
             'address' => $request->address,
             'mobile_number' => "977" . $request->mobile_number,
             'email' => $request->email,
@@ -59,13 +58,13 @@ class UserController extends Controller
         ]);
 
         // generating token
-        $token = $user->createToken($request->email)->plainTextToken;
+        // $token = $user->createToken($request->email)->plainTextToken;
         // response message
         $response = [
             "status" => true,
             "message" => "User Created Successfully",
-            "user" => $user,
-            "token" => $token,
+            // "user" => $user,
+            // "token" => $token,
         ];
 
         // Response if user created successfully 
@@ -146,16 +145,19 @@ class UserController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'mobile_number' => 'unique:users',
-            'password' => 'min:8|max:16|confirmed',
+            // 'mobile_number' => 'unique:users',
+            'gender' => 'in:male,female,others',
+            'modile_number' => 'numeric|regex:/9[6-8]{1}[0-9]{8}/|digits:10|unique:users',
+            'password' => 'min:8|max:20|confirmed',
             'type' => 'in:corporate,individual',
             'is_admin' => 'boolean'
         ]);
 
         $user = User::find($id);
         $user->name = $request->name ? $request->name : $user->name;
-        $user->mobile_number = $request->mobile_number ? $request->mobile_number : $user->mobile_number;
+        $user->gender = $request->gender ? $request->gender : $user->gender;
         $user->address = $request->address ? $request->address : $user->address;
+        $user->mobile_number = $request->mobile_number ? $request->mobile_number : $user->mobile_number;
         $user->password = $request->password ? $request->Hash::make($request->password) : $user->password;
         $user->type = $request->type ? $request->type : $user->type;
         $user->is_admin = $request->is_admin ? $request->is_admin : $user->is_admin;
@@ -185,13 +187,15 @@ class UserController extends Controller
         $user = $request->user();
 
         $request->validate([
-            'mobile_number' => 'unique:users',
-            'password' => 'min:8|max:16|confirmed',
+            'gender' => 'in:male,female,others',
+            'mobile_number' => 'numeric|regex:/9[6-8]{1}[0-9]{8}/|digits:10|unique:users',
+            'password' => 'min:8|max:20|confirmed',
             'type' => 'in:corporate,individual',
             'is_admin' => 'boolean'
         ]);
 
         $user->name = $request->name ? $request->name : $user->name;
+        $user->gender = $request->gender ? $request->gender : $user->gender;
         $user->mobile_number = $request->mobile_number ? $request->mobile_number : $user->mobile_number;
         $user->password = $request->password ? $request->Hash::make($request->password) : $user->password;
         $user->type = $request->type ? $request->type : $user->type;
@@ -252,52 +256,58 @@ class UserController extends Controller
     public function sendResetLink(Request $request)
     {
 
-        $request->validate([
+        $customer = $request->validate([
             'email' => 'required|email|exists:users,email',
         ]);
 
-        $user = User::where('email', $request->email)->get()->first();
+        if (!$customer) {
+            return response()->json('message', 'Email not found in our database');
+        }
 
+        $user = User::where('email', $request->email)->get()->first();
 
         // generating token
         $token = Str::random(64);
 
-        $pass = DB::table('password_resets')->insert([
+        DB::table('password_resets')->insert([
             'email' => $request->email,
             'token' => $token,
             'created_at' => Carbon::now(),
         ]);
 
-
-        $action_link = ['token' => $token, 'email' => $request->email];
-        $body = "Hello $user->name, You can reset your password through the link provided below of email " . $request->email;
-
-        Mail::send('email-forgot', ['action_link' => $action_link, 'body' => $body], function ($message) use ($request) {
+        $fname = explode(' ', $user->name);
+        $data = ['name' => $fname[0], 'data' => 'Please click the button below to reset your password.', 'token' => $token, 'route' => ('rPassword')];
+        $user['to'] = $request->email;
+        $send_mail = Mail::send('forgot-password', $data, function ($message) use ($user) {
             $message->from('noreply@saralprint.com', 'saralprint');
-            $message->to($request->email)->subject('Reset Password');
+            $message->to($user['to']);
+            $message->subject('Reset Password');
         });
 
-        return response()->json('success', 'Password reset link has been sent to you email')->with([
-            'token' => $token,
-            'email' => $request->email
-        ]);
+        if (!$send_mail) {
+            return response()->json('message', 'Unable to send mail to ', $request->email);
+        }
+
+        $successResponse = ["message" => "Please check your mail for resetting the password to", "email" => $request->email, "token" => $token];
+        return response()->json($successResponse, 200);
     }
 
-    // Resetting Password after accessing token through mail
-    public function resetPassword(Request $request)
+    //Password Reset Form
+    public function resetForm(Request $request, $token)
     {
+        return view('reset-form', ["token" => $token]);
         $request->validate([
-            'email' => 'required|email|exists:users|email',
-            'password' => 'required|min:8|max:16|confirmed',
+            'password1' => 'required|min:8|max:20',
+            'password2' => 'required|min:8|max:20',
         ]);
 
         $check_token = DB::table('password_resets')->where([
             'email' => $request->email,
-            'toekn' => $request->token,
+            'token' => $request->token,
         ])->first();
 
         if (!$check_token) {
-            return back()->withInput()->with('fail', 'Invalid token');
+            return back()->withInput()->with('fail', 'Invalid Token');
         } else {
             User::where('email', $request->email)->update([
                 'password' => Hash::make($request->password)
@@ -307,18 +317,59 @@ class UserController extends Controller
                 'email' => $request->email
             ])->delete();
 
-            $successResponse = ["Success" => "Your password has been changed, now you can login with new password."];
+            $successResponse = ["Success" => "Your password has been changed, you can now login with new password."];
 
-            return response()->json($successResponse, 201)->with('verifiedEmail', $request->email);
+            return response()->json($successResponse, 201);
+            // ->with('verifiedEmail', $request->email);
+
+            return redirect()->route('resetSuccess');
         }
     }
+
+    // Resetting Password after accessing token through mail
+    // public function resetPassword(Request $request, $token)
+    // {
+    //     $request->validate([
+    //         'password1' => 'required|min:8|max:20',
+    //         'password1' => 'required|min:8|max:20',
+    //     ]);
+
+
+    //     // $request->validate([
+    //     //     'email' => 'required|email|exists:users|email',
+    //     //     'password' => 'required|min:8|max:20|confirmed',
+    //     // ]);
+
+
+    //     $check_token = DB::table('password_resets')->where([
+    //         'email' => $request->email,
+    //         'token' => $request->token,
+    //     ])->first();
+
+    //     if (!$check_token) {
+    //         return back()->withInput()->with('fail', 'Invalid Token');
+    //     } else {
+    //         User::where('email', $request->email)->update([
+    //             'password' => Hash::make($request->password)
+    //         ]);
+
+    //         DB::table('password_resets')->where([
+    //             'email' => $request->email
+    //         ])->delete();
+
+    //         $successResponse = ["Success" => "Your password has been changed, you can now login with new password."];
+
+    //         return response()->json($successResponse, 201);
+    //         // ->with('verifiedEmail', $request->email);
+    //     }
+    // }
 
     // Change Password
     public function changePassword(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'old_password' => 'required',
-            'password' => 'required|min:8|max:16|confirmed'
+            'password' => 'required|min:8|max:20|confirmed'
         ]);
 
         if ($validator->fails()) {

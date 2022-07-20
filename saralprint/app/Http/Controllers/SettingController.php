@@ -37,6 +37,7 @@ class SettingController extends Controller
             'email' => 'required|email',
             'about_us' => 'required',
             'facebook' => 'required',
+            'logo' => 'required',
         ]);
 
         $setting = Setting::create([
@@ -53,6 +54,7 @@ class SettingController extends Controller
             'instagram' => $request->instagram,
             'linkedIn' => $request->linkedIn,
             'website' => $request->website,
+            'logo' => $request->logo,
         ]);
 
         return $setting;
@@ -106,9 +108,9 @@ class SettingController extends Controller
     public function update(Request $request, $id)
     {
         // $request->validate([
-        //     'email'=>'email',
-        //     'name'=>'name',
-        //     'estd'=>'estd'
+        //     'email' => 'email',
+        // 'name' => 'name',
+        //     'estd' => 'estd'
         // ]);
 
 
@@ -119,9 +121,7 @@ class SettingController extends Controller
         $us->address = $request->address ? $request->address : $us->address;
         $us->zip = $request->zip ? $request->zip : $us->zip;
         $us->about_us = $request->about_us ? $request->about_us : $us->about_us;
-
-
-
+        $us->logo = $request->logo ? $request->logo : $us->logo;
         $us->update();
 
         $errUs = [
@@ -135,7 +135,7 @@ class SettingController extends Controller
 
         $sucessUs = [
             "status" => true,
-            "message" => "successfull"
+            "message" => "Successfully Updated"
         ];
 
         return response()->json($sucessUs, 201);

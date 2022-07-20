@@ -28,6 +28,7 @@ return new class extends Migration
             $table->string('instagram');
             $table->string('linkedIn');
             $table->string('website');
+            $table->string('logo')->unique();
             $table->timestamps();
         });
     }

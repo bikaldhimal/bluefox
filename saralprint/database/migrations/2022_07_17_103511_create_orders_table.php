@@ -16,11 +16,11 @@ return new class extends Migration
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained();
-            $table->enum('status', ['pending', 'delivered']);
+            $table->enum('status', ['pending', 'on-work', 'delivered']);
             $table->integer('quantity');
-            $table->string('discount')->nullable();
+            $table->integer('discount')->nullable();
             $table->integer('total');
-            $table->enum('payment', ['cash_on_delivery', 'esewa', 'khalti', 'connectIPS']);
+            $table->enum('payment', ['COD', 'connectIPS', 'esewa', 'khalti']);
             $table->timestamps();
         });
     }

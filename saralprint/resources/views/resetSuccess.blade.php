@@ -1,0 +1,1 @@
+<h1>Password has been updated successfully</h1>

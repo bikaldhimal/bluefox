@@ -1,8 +1,12 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-
+use Illuminate\Http\Request;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\SettingController;
+use App\Http\Controllers\FeedbackController;
+use App\Http\Controllers\OrderController;
+use App\Http\Controllers\BannerController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -14,32 +18,72 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::post('/signup', [App\Http\Controllers\UserController::class, 'create']);
-Route::post('/login', [App\Http\Controllers\UserController::class, 'login']);
+// User Section
+Route::controller(UserController::class)->group(function () {
+    // Signup and Login
+    Route::post('/signup', 'create');
+    Route::post('/login', 'login')->name('login');
+    // Forgot Password
+    Route::post('/password/forgot', 'sendResetLink');
+    Route::get('/password/forgot/form/{token}', 'resetForm')->name('passwordResetForm');
+    // Route::get('/password/reset/{token}', 'resetPassword')->name('rPassword');
+    Route::get('/resetSuccess', 'resetSuccess')->name('resetSuccess');
 
-// Forger Password api
-Route::post('/password/forgot', [App\Http\Controllers\UserController::class, 'sendResetLink']);
-Route::post('/password/reset', [App\Http\Controllers\UserController::class, 'resetPassword']);
+    Route::group(['middleware' => 'auth:sanctum'], function () {
+        Route::get('/admin/user', 'index');
+        Route::get('/admin/user/{id}', 'show');
+        Route::put('/admin/user/{id}/update', 'update');
+        Route::delete('/admin/user/{id}/delete', 'destroy');
+        Route::get('/profile', 'profile');
+        Route::put('/profile/update', 'updateProfile');
+        Route::delete('/profile/delete', 'profileDelete');
+        Route::post('/profile/change-password', 'changepassword');
+    });
+});
 
-Route::group(['middleware' => 'auth:sanctum'], function () {
-    // User Section
-    Route::get('/user', [App\Http\Controllers\UserController::class, 'index']);
-    Route::get('/user/{id}', [App\Http\Controllers\UserController::class, 'show']);
-    Route::put('/user/{id}/update', [App\Http\Controllers\UserController::class, 'update']);
-    Route::put('/profile/update', [App\Http\Controllers\UserController::class, 'updateProfile']);
-    Route::delete('/user/{id}/delete', [App\Http\Controllers\UserController::class, 'destroy']);
-    Route::get('/profile', [App\Http\Controllers\UserController::class, 'profile']);
-    Route::delete('/profile/delete', [App\Http\Controllers\UserController::class, 'profileDelete']);
-    Route::post('/profile/change-password', [App\Http\Controllers\UserController::class, 'changepassword']);
+// Setting Section
+Route::controller(SettingController::class)->group(function () {
+    Route::group(['middleware' => 'auth:sanctum'], function () {
+        Route::post('/admin/about/add', [App\Http\Controllers\SettingController::class, 'create']);
+        Route::get('/about', [App\Http\Controllers\SettingController::class, 'index']);
+        Route::put('/admin/about/{id}/update', [App\Http\Controllers\SettingController::class, 'update']);
+    });
+});
 
-    // Setting Section
-    Route::get('/about', [App\Http\Controllers\SettingController::class, 'create']);
-    Route::get('/about/show', [App\Http\Controllers\SettingController::class, 'index']);
-    Route::put('/about/{id}/update', [App\Http\Controllers\SettingController::class, 'update']);
+// Order Section
+Route::controller(OrderController::class)->group(function () {
+    Route::group(['middleware' => 'auth:sanctum'], function () {
+        Route::get('/order', 'create');
+        Route::get('/{user_id}/order', 'show');
+        Route::get('/list',  'index');
+        Route::delete('/order/{id}/delete/}', 'destroy');
+        Route::put('/order/{id}', 'update');
+    });
+});
 
-    // Feedback Section
-    Route::get('/sendfeedback', [FeedbackController::class, 'create']);
-    Route::get('/feedback', [App\Http\Controllers\FeedbackController::class, 'index']);
-    Route::put('/feedback/{id}', [App\Http\Controllers\FeedbackController::class, 'update']);
-    Route::delete('/feedback/{id}/delete', [App\Http\Controllers\FeedbackController::class, 'destroy']);
+// OrderItem Section
+// Route::controller(OrderItemController::class)->group(function () {
+//     Route::group(['middleware' => 'auth:sanctum'], function () {
+//         //
+//     });
+// });
+
+// Feedback Section
+Route::controller(FeedbackController::class)->group(function () {
+    Route::group(['middleware' => 'auth:sanctum'], function () {
+        Route::get('/sendfeedback', [FeedbackController::class, 'create']);
+        Route::get('/feedback', [App\Http\Controllers\FeedbackController::class, 'index']);
+        Route::put('/feedback/{id}', [App\Http\Controllers\FeedbackController::class, 'update']);
+        Route::delete('/feedback/{id}/delete', [App\Http\Controllers\FeedbackController::class, 'destroy']);
+    });
+});
+
+// Banner Section
+Route::controller(BannerController::class)->group(function () {
+    Route::group(['middleware' => 'auth:sanctum'], function () {
+        Route::post('/admin/banner/add', 'create');
+        Route::get('/banner', 'index');
+        Route::put('/admin/banner/{id}/update', 'update');
+        Route::delete('/admin/banner/{id}/delete', 'destroy');
+    });
 });

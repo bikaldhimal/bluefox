@@ -22,6 +22,7 @@ class Setting extends Model
         'twitter',
         'instagram',
         'linkedIn',
-        'website'
+        'website',
+        'logo'
     ];
 }
