@@ -21,12 +21,14 @@ use App\Http\Controllers\BannerController;
 // User Section
 Route::controller(UserController::class)->group(function () {
     // Signup and Login
+    Route::post('/admin/signup', 'createAdmin');
     Route::post('/signup', 'create');
     Route::post('/login', 'login')->name('login');
     // Forgot Password
     Route::post('/password/forgot', 'sendResetLink');
+    // after clicking button in mail
     Route::get('/password/forgot/form/{token}', 'resetForm')->name('passwordResetForm');
-    // Route::get('/password/reset/{token}', 'resetPassword')->name('rPassword');
+    Route::post('/password/reset/{token}', 'resetPassword')->name('rPassword');
     Route::get('/resetSuccess', 'resetSuccess')->name('resetSuccess');
 
     Route::group(['middleware' => 'auth:sanctum'], function () {

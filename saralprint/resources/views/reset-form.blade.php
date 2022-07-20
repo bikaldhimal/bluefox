@@ -116,7 +116,7 @@
     <body>
         <div class="container">
             <div class="inner-container">
-                <form action="{{ route('resetSuccess') }}" method="post">
+                <form action="{{ route('rPassword') }}" method="post">
                     <div style="display: flex; flex-direction: column; gap: 1em">
                     @csrf
                     <input type="hidden" name="token" value="{{ $token }}">
@@ -124,7 +124,7 @@
                             <label for="new-password">New Password</label>
                             <input
                                 type="password" 
-                                name="password1"
+                                name="password"
                                 placeholder="Enter your new password"
                             />
                         </div>
@@ -133,7 +133,7 @@
                                 >Confirm Password</label>
                             <input
                                 type="password" 
-                                name="password2"
+                                name="password_confirmation"
                                 placeholder="Re-enter your new password"
                             />
                         </div>

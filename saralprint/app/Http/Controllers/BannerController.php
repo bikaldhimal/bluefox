@@ -29,13 +29,20 @@ class BannerController extends Controller
     {
         $request->validate([
             'title' => 'required|unique:banners|min:3|max:255',
-            'cover' => 'required',
+            'cover' => 'required|required|mimes:jpg,jpeg,png|max:5048|unique:banners',
             'status' => 'required|in:active,inactive'
         ]);
 
+        $newBannerImageName = time() . '-' . $request->name . '.' .
+            $request->image()->extension();
+
+        $request->move(public_path('images/banner'), $newBannerImageName);
+        dd($newBannerImageName);
+
+
         $banner = Banner::create([
             'title' => $request->title,
-            'cover' => $request->cover,
+            'cover' => $request->$newBannerImageName,
             'status' => $request->status
         ]);
 

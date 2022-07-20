@@ -25,14 +25,14 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->rememberToken();
-            $table->enum('type', ['corporate', 'individual']);
+            $table->enum('type', ['individual', 'corporate', 'admin']);
             $table->string('panNumber')
                 ->unique()
                 ->nullable();
             $table->enum('status', ['pending', 'active', 'inactive'])->default('pending');
             $table->string('panDocImage')
                 ->unique()->nullable();
-            $table->string('coverImage')
+            $table->string('profileImage')
                 ->unique()->nullable();
             $table->boolean('is_admin')->default(false);
             $table->timestamps();

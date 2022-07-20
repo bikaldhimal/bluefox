@@ -31,6 +31,8 @@ class UserController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
+
+    // Signup for Customer
     public function create(Request $request)
     {
         $request->validate([
@@ -40,11 +42,25 @@ class UserController extends Controller
             'mobile_number' => 'required|numeric|regex:/9[6-8]{1}[0-9]{8}/|digits:10|unique:users',
             'password' => 'required|min:8|max:20|confirmed',
             'email' => 'required|email|unique:users',
-            'type' => 'required|in:corporate,individual',
-            'is_admin' => 'required|boolean'
+            'type' => 'required|in:individual,corporate',
+            // 'panDocImage' => 'mimes:jpg,jpeg,png|max:5048|unique:users',
+            // 'profileImage' => 'required|mimes:jpg,jpeg,png|max:5048|unique:users',
+            'is_admin' => 'boolean'
         ]);
 
-        $user = User::create([
+        // $newProfileImageName = time() . '-' . $request->name . '.' .
+        //     $request->image()->extension();
+
+        // $newPanDocImageName = time() . '-' . $request->name . '.' .
+        //     $request->image()->extension();
+
+        // $request->move(public_path('images/profile'), $newProfileImageName);
+        // dd($newProfileImageName);
+
+        // $request->move(public_path('images/pan'), $newPanDocImageName);
+        // dd($newPanDocImageName);
+
+        User::create([
             'name' => $request->name,
             'gender' => $request->gender,
             'address' => $request->address,
@@ -52,17 +68,31 @@ class UserController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'type' => $request->type,
-            'panNumber' => $request->panNumber,
-            'is_admin' => $request->is_admin,
+            // 'panNumber' => $request->panNumber,
+            // 'panDocImage' => $request->panDocImage,
+            'is_admin' => false,
+            // 'profileImage' => $newProfileImageName,
             'mobile_verified_code' => rand(11111, 99999),
         ]);
+
+        // If user is corporate
+        // if ($request->type('corporate')) {
+        //     $request->validate([
+        //         'panNumber' => 'required|digits:5',
+        //         'panDocImage' => 'required|mimes:jpg,jpeg,png|max:5048|unique:users'
+        //     ]);
+        //     User::create([
+        //         'panNumber' => $request->panNumber,
+        //         // 'panDocImage' => $newPanDocImageName
+        //     ]);
+        // }
 
         // generating token
         // $token = $user->createToken($request->email)->plainTextToken;
         // response message
         $response = [
             "status" => true,
-            "message" => "User Created Successfully",
+            "message" => "User Account Created Successfully",
             // "user" => $user,
             // "token" => $token,
         ];
@@ -71,9 +101,66 @@ class UserController extends Controller
         return response()->json($response, 201);
     }
 
+    // Signup for Admin
+    public function createAdmin(Request $request)
+    {
+        $request->validate([
+            'name' => 'required',
+            'gender' => 'required|in:male,female,others',
+            'address' => 'required',
+            'mobile_number' => 'required|numeric|regex:/9[6-8]{1}[0-9]{8}/|digits:10|unique:users',
+            'password' => 'required|min:8|max:20|confirmed',
+            'email' => 'required|email|unique:users',
+            // 'type' => 'required|in:corporate,individual',
+            // 'panDocImage' => 'mimes:jpg,jpeg,png|max:5048|unique:users',
+            // 'profileImage' => 'required|mimes:jpg,jpeg,png|max:5048|unique:users',
+            'is_admin' => 'boolean'
+        ]);
+
+        //     $newProfileImageName = time() . '-' . $request->name . '.' .
+        //         $request->image()->extension();
+
+        //     $newPanDocImageName = time() . '-' . $request->name . '.' .
+        //         $request->image()->extension();
+
+        //     $request->move(public_path('images/profile'), $newProfileImageName);
+        //     dd($newProfileImageName);
+
+        //     $request->move(public_path('images/pan'), $newPanDocImageName);
+        //     dd($newPanDocImageName);
+
+        $user = User::create([
+            'name' => $request->name,
+            'gender' => $request->gender,
+            'address' => $request->address,
+            'mobile_number' => "977" . $request->mobile_number,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+            'type' => "admin",
+            // 'panNumber' => $request->panNumber,
+            // 'panDocImage' => $request->panDocImage,
+            'is_admin' => true,
+            // 'profileImage' => $newProfileImageName,
+            'mobile_verified_code' => rand(11111, 99999),
+        ]);
+
+        //     // generating token
+        $token = $user->createToken($request->email)->plainTextToken;
+        //     // response message
+        $response = [
+            "status" => true,
+            "message" => "Admin Account Created Successfully",
+            // "user" => $user,
+            // "token" => $token,
+        ];
+
+        // Response if user created successfully 
+        return response()->json($response, 201);
+    }
+
+
     public function login(Request $request)
     {
-
         $request->validate([
             'email' => 'required|email',
             'password' => 'required',
@@ -296,8 +383,14 @@ class UserController extends Controller
     public function resetForm(Request $request, $token)
     {
         return view('reset-form', ["token" => $token]);
+    }
+
+    // Resetting Password after accessing token through mail
+    public function resetPassword(Request $request, $token)
+    {
+
         $request->validate([
-            'password1' => 'required|min:8|max:20',
+            'password1' => 'required|min:8|max:20|confirmed',
             'password2' => 'required|min:8|max:20',
         ]);
 
@@ -325,44 +418,6 @@ class UserController extends Controller
             return redirect()->route('resetSuccess');
         }
     }
-
-    // Resetting Password after accessing token through mail
-    // public function resetPassword(Request $request, $token)
-    // {
-    //     $request->validate([
-    //         'password1' => 'required|min:8|max:20',
-    //         'password1' => 'required|min:8|max:20',
-    //     ]);
-
-
-    //     // $request->validate([
-    //     //     'email' => 'required|email|exists:users|email',
-    //     //     'password' => 'required|min:8|max:20|confirmed',
-    //     // ]);
-
-
-    //     $check_token = DB::table('password_resets')->where([
-    //         'email' => $request->email,
-    //         'token' => $request->token,
-    //     ])->first();
-
-    //     if (!$check_token) {
-    //         return back()->withInput()->with('fail', 'Invalid Token');
-    //     } else {
-    //         User::where('email', $request->email)->update([
-    //             'password' => Hash::make($request->password)
-    //         ]);
-
-    //         DB::table('password_resets')->where([
-    //             'email' => $request->email
-    //         ])->delete();
-
-    //         $successResponse = ["Success" => "Your password has been changed, you can now login with new password."];
-
-    //         return response()->json($successResponse, 201);
-    //         // ->with('verifiedEmail', $request->email);
-    //     }
-    // }
 
     // Change Password
     public function changePassword(Request $request)

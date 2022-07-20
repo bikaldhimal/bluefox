@@ -28,7 +28,7 @@ class User extends Authenticatable
         'panNumber',
         'status',
         'panDocImage',
-        'coverImage',
+        'profileImage',
         'mobile_verified_code',
         'is_admin',
     ];

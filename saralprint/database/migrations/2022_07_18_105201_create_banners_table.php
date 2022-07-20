@@ -13,12 +13,14 @@ return new class extends Migration
      */
     public function up()
     {
+        // $current = Carbon::now();
         Schema::create('banners', function (Blueprint $table) {
             $table->id();
             $table->string('title')->unique();
             $table->string('cover')->unique();
             $table->enum('status', ['active', 'inactive'])->default('inactive');
             $table->timestamps();
+            // Carbon::now()->format('Y-m-d')
         });
     }
 
