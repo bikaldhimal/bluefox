@@ -16,7 +16,7 @@ return new class extends Migration
         Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->enum('gender', ['male', 'female', 'others']);
+            $table->enum('gender', ['male', 'female', 'others', 'rather_not_to_say']);
             $table->string('address');
             $table->string('password');
             $table->string('mobile_number')->unique();

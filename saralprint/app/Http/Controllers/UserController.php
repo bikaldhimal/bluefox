@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Storage;
+use App\Rules\CorporateUser;
 
 class UserController extends Controller
 {
@@ -36,31 +38,22 @@ class UserController extends Controller
     public function create(Request $request)
     {
         $request->validate([
-            'name' => 'required',
-            'gender' => 'required|in:male,female,others',
+            'name' => ['required'],
+            'gender' => 'required|in:male,female,others,rather_not_to_say',
             'address' => 'required',
             'mobile_number' => 'required|numeric|regex:/9[6-8]{1}[0-9]{8}/|digits:10|unique:users',
-            'password' => 'required|min:8|max:20|confirmed',
+            // 'mobile_number' => 'required|array',
+            // 'mobile_number.*' => 'required|numeric|regex:/9[6-8]{1}[0-9]{8}/|digits:10|distinct|unique:users',
+            'password' => 'required|min:8|max:20|regex:/((?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[\W]).{8,20})/|confirmed',
             'email' => 'required|email|unique:users',
-            'type' => 'required|in:individual,corporate',
-            // 'panDocImage' => 'mimes:jpg,jpeg,png|max:5048|unique:users',
-            // 'profileImage' => 'required|mimes:jpg,jpeg,png|max:5048|unique:users',
+            'type' => 'in:individual,corporate',
+            'panNumber' => 'required_if:type,corporate|digits:9|unique:users',
+            'panDocImage' => 'required_if:type,corporate|mimes:jpg,jpeg,png|max:5048|unique:users',
+            'profileImage' => 'required_if:type,corporate|mimes:jpg,jpeg,png|max:5048|unique:users',
             'is_admin' => 'boolean'
         ]);
 
-        // $newProfileImageName = time() . '-' . $request->name . '.' .
-        //     $request->image()->extension();
-
-        // $newPanDocImageName = time() . '-' . $request->name . '.' .
-        //     $request->image()->extension();
-
-        // $request->move(public_path('images/profile'), $newProfileImageName);
-        // dd($newProfileImageName);
-
-        // $request->move(public_path('images/pan'), $newPanDocImageName);
-        // dd($newPanDocImageName);
-
-        User::create([
+        $user = User::create([
             'name' => $request->name,
             'gender' => $request->gender,
             'address' => $request->address,
@@ -68,28 +61,23 @@ class UserController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'type' => $request->type,
-            // 'panNumber' => $request->panNumber,
-            // 'panDocImage' => $request->panDocImage,
+            'panNumber' => $request->panNumber,
+            'panDocImage' => $request->panDocImage,
+            'profileImage' => $request->profileImage,
             'is_admin' => false,
-            // 'profileImage' => $newProfileImageName,
             'mobile_verified_code' => rand(11111, 99999),
         ]);
 
-        // If user is corporate
-        // if ($request->type('corporate')) {
-        //     $request->validate([
-        //         'panNumber' => 'required|digits:5',
-        //         'panDocImage' => 'required|mimes:jpg,jpeg,png|max:5048|unique:users'
-        //     ]);
-        //     User::create([
-        //         'panNumber' => $request->panNumber,
-        //         // 'panDocImage' => $newPanDocImageName
-        //     ]);
-        // }
+        $newPanDocImageName = uniqid() . '.' . $request->image->extension();
+        Storage::disk('public')->put("images/pan", $request->image);
+        dd($newPanDocImageName);
 
-        // generating token
+        $newProfileImageName = uniqid() . '.' . $request->image->extension();
+        Storage::disk('public')->put("images/profile", $request->image);
+        dd($newProfileImageName);
+
         // $token = $user->createToken($request->email)->plainTextToken;
-        // response message
+
         $response = [
             "status" => true,
             "message" => "User Account Created Successfully",
@@ -106,28 +94,18 @@ class UserController extends Controller
     {
         $request->validate([
             'name' => 'required',
-            'gender' => 'required|in:male,female,others',
+            'gender' => 'required|in:male,female,others,rather_not_to_say',
             'address' => 'required',
-            'mobile_number' => 'required|numeric|regex:/9[6-8]{1}[0-9]{8}/|digits:10|unique:users',
-            'password' => 'required|min:8|max:20|confirmed',
+            'mobile_number' => 'numeric|regex:/9[6-8]{1}[0-9]{8}/|digits:10',
+            // 'mobile_number' => 'required|array',
+            // 'mobile_number.*' => 'required|numeric|regex:/9[6-8]{1}[0-9]{8}/|digits:10|distinct|unique:users',
+            'password' => 'required|min:8|max:20|regex:/((?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[\W]).{8,20})/|confirmed',
             'email' => 'required|email|unique:users',
             // 'type' => 'required|in:corporate,individual',
             // 'panDocImage' => 'mimes:jpg,jpeg,png|max:5048|unique:users',
             // 'profileImage' => 'required|mimes:jpg,jpeg,png|max:5048|unique:users',
             'is_admin' => 'boolean'
         ]);
-
-        //     $newProfileImageName = time() . '-' . $request->name . '.' .
-        //         $request->image()->extension();
-
-        //     $newPanDocImageName = time() . '-' . $request->name . '.' .
-        //         $request->image()->extension();
-
-        //     $request->move(public_path('images/profile'), $newProfileImageName);
-        //     dd($newProfileImageName);
-
-        //     $request->move(public_path('images/pan'), $newPanDocImageName);
-        //     dd($newPanDocImageName);
 
         $user = User::create([
             'name' => $request->name,
@@ -144,9 +122,8 @@ class UserController extends Controller
             'mobile_verified_code' => rand(11111, 99999),
         ]);
 
-        //     // generating token
-        $token = $user->createToken($request->email)->plainTextToken;
-        //     // response message
+        // $token = $user->createToken($request->email)->plainTextToken;
+
         $response = [
             "status" => true,
             "message" => "Admin Account Created Successfully",
@@ -235,7 +212,7 @@ class UserController extends Controller
             // 'mobile_number' => 'unique:users',
             'gender' => 'in:male,female,others',
             'modile_number' => 'numeric|regex:/9[6-8]{1}[0-9]{8}/|digits:10|unique:users',
-            'password' => 'min:8|max:20|confirmed',
+            'password' => 'min:8|max:20|regex:/((?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[\W]).{8,20})/|confirmed',
             'type' => 'in:corporate,individual',
             'is_admin' => 'boolean'
         ]);
@@ -275,8 +252,8 @@ class UserController extends Controller
 
         $request->validate([
             'gender' => 'in:male,female,others',
-            'mobile_number' => 'numeric|regex:/9[6-8]{1}[0-9]{8}/|digits:10|unique:users',
-            'password' => 'min:8|max:20|confirmed',
+            'mobile_number' => 'numeric|regex:/9[6-8]{1}[0-9]{8}/|digits:10',
+            'password' => 'min:8|max:20|regex:/((?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[\W]).{8,20})/|confirmed',
             'type' => 'in:corporate,individual',
             'is_admin' => 'boolean'
         ]);
@@ -322,6 +299,13 @@ class UserController extends Controller
         $user->delete();
         $successResponse = ["message" => "User deleted successfully"];
         return response()->json($successResponse, 200);
+    }
+
+    // Bulk Delete (Delete All User)
+    public function deleteAllUser(Request $request)
+    {
+        DB::table("users")->whereIn('id', $request->id)->delete();
+        return response()->json(['success' => "Users deleted successfully"]);
     }
 
     public function profile(Request $request)
@@ -424,7 +408,7 @@ class UserController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'old_password' => 'required',
-            'password' => 'required|min:8|max:20|confirmed'
+            'password' => 'required|min:8|max:20|regex:/((?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[\W]).{8,20})/|confirmed'
         ]);
 
         if ($validator->fails()) {

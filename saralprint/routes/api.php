@@ -39,6 +39,7 @@ Route::controller(UserController::class)->group(function () {
         Route::get('/profile', 'profile');
         Route::put('/profile/update', 'updateProfile');
         Route::delete('/profile/delete', 'profileDelete');
+        Route::delete('/admin/deleteAllUser', 'deleteAllUser');
         Route::post('/profile/change-password', 'changepassword');
     });
 });
