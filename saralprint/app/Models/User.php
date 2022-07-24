@@ -25,10 +25,10 @@ class User extends Authenticatable
         'address',
         'mobile_number',
         'type',
-        'panNumber',
+        'pan_number',
         'status',
-        'panDocImage',
-        'profileImage',
+        'pan_document',
+        'profile_image',
         'mobile_verified_code',
         'is_admin',
     ];
